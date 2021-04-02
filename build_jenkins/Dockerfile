@@ -1,16 +1,31 @@
 #https://raw.githubusercontent.com/jenkinsci/docker/master/Dockerfile-jdk11
+
 FROM openjdk:11-jdk-stretch
 
-RUN apt-get update && apt-get upgrade -y && apt-get install -y git curl && rm -rf /var/lib/apt/lists/* 
-#sudo apt-get install jenkins && apt-get -y install vim
+#ARG PROXY_HOST=""
+#ARG PROXY_USER=""
+#ARG PROXY_PASS=""
+#
+#ENV http_proxy="http://$PROXY_USER:$PROXY_PASS@$PROXY_HOST:3128"
+#ENV https_proxy="http://$PROXY_USER:$PROXY_PASS@$PROXY_HOST:3128"
+#
+USER root
+RUN apt-get update && apt-get upgrade -y && apt-get install -y git wget curl vim && rm -rf /var/lib/apt/lists/*
+RUN apt-get clean && apt-get update
 
+#install helm  https://raw.githubusercontent.com/kubernetes/helm/${DESIRED_VERSION}/scripts/get
+RUN wget -O /tmp/get_helm.sh \
+    https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3  && \
+    chmod 700 /tmp/get_helm.sh && \
+    /tmp/get_helm.sh && \
+    rm /tmp/get_helm.sh
 
-#install kubectl
-RUN curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add - && \
-	echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" | tee -a /etc/apt/sources.list.d/kubernetes.list && \
-	apt-get update && \
-	apt-get install -y kubectl && \
-    curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
+#install kubectl					  
+ENV KUBECTL_RELEASE=1.18.2
+RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_RELEASE}/bin/linux/amd64/kubectl && \
+    chmod +x ./kubectl && \
+    mv ./kubectl /usr/local/bin/kubectl && \
+    /usr/local/bin/kubectl version --client
 
 
 ARG user=jenkins
@@ -44,6 +59,54 @@ RUN mkdir -p /usr/share/jenkins/ref/init.groovy.d
 # Use tini as subreaper in Docker container to adopt zombie processes
 ARG TINI_VERSION=v0.16.1
 COPY tini_pub.gpg ${JENKINS_HOME}/tini_pub.gpg
+RUN curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-static-$(dpkg --print-architecture) -o /sbin/tini \
+  && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-static-$(dpkg --print-architecture).asc -o /sbin/tini.asc \
+  && gpg --no-tty --import ${JENKINS_HOME}/tini_pub.gpg \
+  && gpg --verify /sbin/tini.asc \
+  && rm -rf /sbin/tini.asc /root/.gnupg \
+  && chmod +x /sbin/tini
+
+
+#latest stable
+ARG JENKINS_URL=http://mirrors.jenkins.io/war-stable/latest/jenkins.war
+#specifidy version 
+ENV JENKINS_VERSION=2.264
+#ARG JENKINS_URL=https://updates.jenkins.io/download/war/${JENKINS_VERSION}/jenkins.war
+
+# could use ADD but this one does not check Last-Modified header neither does it allow to control checksum
+# see https://github.com/docker/docker/issues/8331
+RUN curl -fsSL ${JENKINS_URL} -o /usr/share/jenkins/jenkins.war
+
+ENV JENKINS_UC https://updates.jenkins.io
+ENV JENKINS_UC_EXPERIMENTAL=https://updates.jenkins.io/experimental
+ENV JENKINS_INCREMENTALS_REPO_MIRROR=https://repo.jenkins-ci.http://mirrors.jenkins.io/war-stable/latest/jenkins.warorg/incrementals
+RUN chown -R ${user} "$JENKINS_HOME" /usr/share/jenkins/ref
+
+# for main web interface:
+EXPOSE ${http_port}
+
+# will be used by attached slave agents:
+EXPOSE ${agent_port}
+
+ENV COPY_REFERENCE_FILE_LOG $JENKINS_HOME/copy_reference_file.log
+ENV JENKINS_ENABLE_FUTURE_JAVA=true
+
+ENV http_proxy=
+ENV https_proxy=
+
+USER ${user}
+
+#COPY proxy.xml /var/jenkins_home/proxy.xml
+COPY jenkins-support /usr/local/bin/jenkins-support
+COPY jenkins.sh /usr/local/bin/jenkins.sh
+COPY tini-shim.sh /bin/tini
+ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/jenkins.sh"]
+
+# from a derived Dockerfile, can use `RUN plugins.sh active.txt` to setup /usr/share/jenkins/ref/plugins from a support bundle
+#COPY plugins.sh /usr/local/bin/plugins.sh
+#COPY install-plugins.sh /usr/local/bin/install-plugins.sh
+#COPY plugins /var/jenkins_home/plugins
+
 RUN curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-static-$(dpkg --print-architecture) -o /sbin/tini \
   && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-static-$(dpkg --print-architecture).asc -o /sbin/tini.asc \
   && gpg --no-tty --import ${JENKINS_HOME}/tini_pub.gpg \
