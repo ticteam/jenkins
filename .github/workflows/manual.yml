@@ -32,6 +32,5 @@ jobs:
         REGISTRY_USER_NAME: ${{ secrets.REGISTRY_USER_NAME }}
         REGISTRY_USER_PSW: ${{ secrets.REGISTRY_USER_PSW }}
       run: |
-        sh env
         sh ./build_and_run_jenkins.sh
       
