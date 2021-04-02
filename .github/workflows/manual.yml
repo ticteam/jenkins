@@ -26,6 +26,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     # Runs a single command using the runners shell
+    - uses: actions/checkout@v2
     - name: update Jenkins
       env: # Or as an environment variable
         REGISTRY_USER_NAME: ${{ secrets.REGISTRY_USER_NAME }},
