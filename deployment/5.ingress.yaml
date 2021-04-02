@@ -1,0 +1,15 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jenkins
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    ingress.kubernetes.io/protocol: http
+spec:
+  rules:
+  - http:
+      paths:
+      - backend:
+          serviceName: jenkins
+          servicePort: 80
+        path: /jenkins

@@ -1,0 +1,14 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingressroutejenkins
+spec:
+  entryPoints:
+    - web
+  routes:
+  - match: Host(`centos.ivs.local`) && PathPrefix(`/jenkins`)
+    kind: Rule
+    services:
+    - name: jenkins
+      port: 80
+

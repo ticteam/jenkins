@@ -1,0 +1,45 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins
+spec:
+  replicas: 1
+  selector:
+   matchLabels:
+    app: jenkins
+  template:
+    metadata:
+      labels:
+        app: jenkins
+    spec:
+      containers:
+      - name: jenkins
+        image: docker.io/ticteam/jenkins:latest
+        env:
+         - name: JENKINS_OPTS
+           value: "--prefix=/jenkins"
+         - name: MY_POD_IP
+           valueFrom:
+             fieldRef:
+               fieldPath: status.podIP 
+        ports:
+        - name: http-port
+          containerPort: 8080
+        - name: jnlp-port
+          containerPort: 50000
+        volumeMounts:
+          - name: jenkins-home
+            mountPath: /var/jenkins_home
+#          - name: docker-sock-volume
+#            mountPath: /var/run/docker.sock
+      volumes:
+        - name: jenkins-home
+          persistentVolumeClaim:
+            claimName: jenkins-home
+#        - name: docker-sock-volume
+#          hostPath:
+            # location on host
+#            path: /var/run/docker.sock
+            # this field is optional
+#            type: File                          
