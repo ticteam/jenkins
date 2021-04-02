@@ -31,7 +31,7 @@ jobs:
       env: # Or as an environment variable
         REGISTRY_USER_NAME: ${{ secrets.REGISTRY_USER_NAME }}
         REGISTRY_USER_PSW: ${{ secrets.REGISTRY_USER_PSW }}
-      run: | 
-       print %ENV
+      run: |
+        print %ENV
         sh ./build_and_run_jenkins.sh
       
