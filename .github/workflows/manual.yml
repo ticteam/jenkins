@@ -1,6 +1,6 @@
 # This is a basic workflow that is manually triggered
 
-name: Manual workflow
+name: Manual update Jenkins
 
 # Controls when the action will run. Workflow runs when manually triggered using the UI
 # or API.
@@ -10,9 +10,9 @@ on:
     inputs:
       name:
         # Friendly description to be shown in the UI instead of 'name'
-        description: 'Person to greet'
+        description: 'update Jenkins to the latest version'
         # Default value if no value is explicitly provided
-        default: 'World'
+        default: 'latest'
         # Input has to be provided for the workflow to run
         required: true
 
@@ -26,5 +26,8 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     # Runs a single command using the runners shell
-    - name: Send greeting
-      run: echo "Hello ${{ github.event.inputs.name }}"
+    - name: update Jenkins
+    env: # Or as an environment variable
+      REGISTRY_USER_NAME: ${{ secrets.REGISTRY_USER_NAME }}
+      REGISTRY_USER_PSW: ${{ secrets.REGISTRY_USER_PSW }}
+      run: ./build_and_run_jenkins.sh
