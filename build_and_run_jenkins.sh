@@ -41,7 +41,7 @@ cd ..
 kubectl create secret docker-registry pull-secret --dry-run=client --docker-server=${REGISTRY_DOMAIN} --docker-username=${REGISTRY_USER_NAME} --docker-password=${REGISTRY_USER_PSW} -o yaml > docker-secret.yaml
 kubectl apply -f docker-secret.yaml && rm docker-secret.yaml
 ls -la
-cd deployment
+cd jenkins/deployment
 kubectl delete -f pod-jenkins.yaml
 
 echo "Warten bis Jenkins runtergefahren"
