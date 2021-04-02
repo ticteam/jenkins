@@ -14,8 +14,8 @@ PROXY_USER=""
 PROXY_PASS=""
 
 docker login --username ${REGISTRY_USER_NAME} --password ${REGISTRY_USER_PSW} ${REGISTRY_DOMAIN} 	
-
-docker build -t ${appId} ./build_jenkins
+cd /build_jenkins
+docker build -t ${appId} .
 
 echo '################################################################################'
 echo 'if the build failed for any reasons, you have 30 seconds to stop it here - STRG+C'
@@ -36,6 +36,7 @@ docker push ${REGISTRY_URL}/${appId}:${appVersion}
 docker rmi ${REGISTRY_URL}/${appId}:${latesttag}
 docker rmi ${REGISTRY_URL}/${appId}:${appVersion}
 
+cd ..
 # create k8s image pul secret
 kubectl create secret docker-registry pull-secret --dry-run=client --docker-server=${REGISTRY_DOMAIN} --docker-username=${REGISTRY_USER_NAME} --docker-password=${REGISTRY_USER_PSW} -o yaml > docker-secret.yaml
 kubectl apply -f docker-secret.yaml && rm docker-secret.yaml
