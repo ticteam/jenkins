@@ -40,14 +40,16 @@ cd ..
 # create k8s image pul secret
 kubectl create secret docker-registry pull-secret --dry-run=client --docker-server=${REGISTRY_DOMAIN} --docker-username=${REGISTRY_USER_NAME} --docker-password=${REGISTRY_USER_PSW} -o yaml > docker-secret.yaml
 kubectl apply -f docker-secret.yaml && rm docker-secret.yaml
-kubectl delete -f deployment/pod-jenkins.yaml
+ls -la
+cd deployment
+kubectl delete -f pod-jenkins.yaml
 
 echo "Warten bis Jenkins runtergefahren"
 sleep 20
 
 echo "Jenkins starten"
 #jenkins-persistence-volume-claim.yaml
-kubectl apply -f deployment/pod-jenkins.yaml
+kubectl apply -f pod-jenkins.yaml
 
 sleep 20
 
